@@ -1,7 +1,7 @@
 {
   "configurations": [
     {
-      "name": "linux-clang-x64",
+      "name": "linux-dpcpp-x64",
       "includePath": [
         "${workspaceFolder}/**"
       ],

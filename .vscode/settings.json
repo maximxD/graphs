@@ -131,7 +131,12 @@
     "ranges": "cpp",
     "shared_mutex": "cpp",
     "list": "cpp",
-    "filesystem": "cpp"
+    "filesystem": "cpp",
+    "complex": "cpp",
+    "queue": "cpp",
+    "__functional_03": "cpp",
+    "target": "cpp",
+    "*.def": "cpp"
   },
   "cmake.sourceDirectory": "/home/maxim/vkr/sample"
 }

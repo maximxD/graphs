@@ -25,7 +25,7 @@ public:
             throw std::out_of_range("Vertex index out of range");
         }
         edges.push_back({from, to, weight});
-        // edges.push_back({to, from, weight}); // Для неориентированного графа
+        edges.push_back({to, from, weight});
     }
 
     // Создание случайного графа
@@ -43,7 +43,7 @@ public:
                 if (dis(gen) < edge_probability) {
                     int weight = weight_dis(gen);
                     edges.push_back({i, j, weight});
-                    // edges.push_back({j, i, weight});
+                    edges.push_back({j, i, weight});
                 }
             }
         }
@@ -86,6 +86,17 @@ public:
     // Получение всех ребер
     const std::vector<Edge>& get_edges() const {
         return edges;
+    }
+
+    // Преобразование графа в матрицу смежности
+    std::vector<std::vector<std::pair<int, int>>> to_adjacency_matrix() const {
+        std::vector<std::vector<std::pair<int, int>>> adj_matrix(vertices);
+
+        for (const auto& edge : edges) {
+            adj_matrix[edge.from].emplace_back(edge.to, edge.weight);
+        }
+
+        return adj_matrix;
     }
 };
 
