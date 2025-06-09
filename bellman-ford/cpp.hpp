@@ -1,6 +1,7 @@
+#pragma once
+
 #include <vector>
 #include "../common/graph.hpp"
-#include "task.hpp"
 
 std::vector<int> bellman_ford_cpp(int vertices, std::vector<Edge> edges, int source, std::chrono::duration<double>& duration) {
     std::vector<int> dist(vertices, INF);
@@ -28,13 +29,5 @@ std::vector<int> bellman_ford_cpp(int vertices, std::vector<Edge> edges, int sou
     auto stop = std::chrono::high_resolution_clock::now();
     duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 
-    // for (int i = 0; i < vertices; i++) {
-    //     if (dist[i] == INF) {
-    //         std::cout << "INF ";
-    //     } else {
-    //         std::cout << dist[i] << " ";
-    //     }
-    // }
-    // std::cout << std::endl;
     return dist;
 }

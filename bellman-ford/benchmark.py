@@ -18,28 +18,29 @@ def run_benchmark(executable, vertices, prob, save=False):
     times = re.findall(r'реализация: (\d+\.\d+) секунд', result.stdout)
     if times:
         times = [float(t) for t in times]
-        return np.mean(times), np.std(times)
+        times.sort()
+        times = times[2:-2]
+        return np.mean(times)
     else:
         print(f"Не удалось найти время выполнения в выводе {executable}")
         print("Вывод программы:", result.stdout)
-        return None, None
+        return None
 
 def main():
     # Список исполняемых файлов
     results = {}
-    executables = ['main-cpp.o', 'main-dpc.o', 'main-openmp.o']
-    labels = ['C++', 'DPC++', 'OpenMP']
+    executables = ['main-cpp.o', 'main-dpc-cpu.o', 'main-dpc-gpu.o', 'main-openmp-cpu.o', 'main-openmp-gpu.o']
+    labels = ['C++', 'DPC++ CPU', 'DPC++ GPU', 'OpenMP CPU', 'OpenMP GPU']
     
     # Создаем директории для результатов
     Path('benchmarks').mkdir(exist_ok=True)
 
-    # vertices = [100, 500, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 12500, 15000]
     probs = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     vertices_by_prob = {}
     for prob in probs:
         vertices_by_prob[prob] = []
         vertices = 100
-        while vertices**2 * prob < 300_000_000:
+        while vertices**2 * prob <= 250_000_000:
             vertices_by_prob[prob].append(vertices)
             if vertices < 500:
                 vertices += 100
@@ -59,8 +60,7 @@ def main():
         # Создаем график
         plt.figure(figsize=(12, 8))
 
-        means = [[], [], []]
-        stds = [[], [], []]
+        avgs = [[] for _ in range(len(executables))]
         vertices = vertices_by_prob[prob]
     
         # Запускаем бенчмарки для каждого количества вершин
@@ -70,25 +70,22 @@ def main():
                 print(f"Тестирование {exe} для {v} вершин")
                 
                 if i == 0:  # Для первой реализации сохраняем граф
-                    mean, std = run_benchmark(exe, v, prob, save=True)
+                    avg = run_benchmark(exe, v, prob, save=True)
                 else:
-                    mean, std = run_benchmark(exe, v, prob)
+                    avg = run_benchmark(exe, v, prob)
                 
-                if mean is not None:
-                    means[i].append(mean)
-                    stds[i].append(std)
-                    print(f"Среднее время = {mean:.6f} ± {std:.6f} сек")
+                if avg is not None:
+                    avgs[i].append(avg)
+                    print(f"Среднее время = {avg:.6f}")
 
         results[prob] = {
-            "means": means,
-            "stds": stds,
+            "avgs": avgs,
             "vertices": vertices
         }
 
         # Строим график для текущей реализации
         for i, exe in enumerate(executables):
-            plt.errorbar(vertices, means[i], yerr=stds[i], label=labels[i], 
-                        marker='o', capsize=5, linewidth=2)
+            plt.plot(vertices, avgs[i], label=labels[i], marker='o', linewidth=2)
         
         # Настраиваем график
         plt.xlabel('Количество вершин')
