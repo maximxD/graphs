@@ -75,10 +75,10 @@ public:
                 should_save_graph = true;
             } else if (arg == "--delta" && i + 1 < argc) {
                 delta = std::atoi(argv[++i]);
-                if (delta <= 0) {
-                    std::cerr << "Ошибка: дельта должна быть положительным числом" << std::endl;
-                    return 1;
-                }
+                // if (delta <= 0) {
+                //     std::cerr << "Ошибка: дельта должна быть положительным числом" << std::endl;
+                //     return 1;
+                // }
             } else if (arg == "--print") {
                 should_print_dists = true;
             } else if (arg == "--help") {

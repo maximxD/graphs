@@ -142,7 +142,9 @@
     "__node_handle": "cpp",
     "__split_buffer": "cpp",
     "stack": "cpp",
-    "map": "cpp"
+    "map": "cpp",
+    "__locale": "cpp",
+    "__string": "cpp"
   },
   "cmake.sourceDirectory": "/home/maxim/vkr/sample"
 }

@@ -4,6 +4,7 @@ import numpy as np
 from pathlib import Path
 import re
 import json
+import os
 
 def run_benchmark(executable, vertices, prob, save=False):
     cmd = [f"./{executable}"]
@@ -26,14 +27,26 @@ def run_benchmark(executable, vertices, prob, save=False):
         print("Вывод программы:", result.stdout)
         return None
 
+def save_intermediate_results(results, filename='results.json'):
+    with open(filename, 'w') as f:
+        json.dump(results, f)
+
+def load_existing_results(filename='results.json'):
+    if os.path.exists(filename):
+        with open(filename, 'r') as f:
+            return json.load(f)
+    return {}
+
 def main():
     # Список исполняемых файлов
-    results = {}
     executables = ['main-cpp.o', 'main-dpc-cpu.o', 'main-dpc-gpu.o', 'main-openmp-cpu.o', 'main-openmp-gpu.o']
-    labels = ['C++', 'DPC++ CPU', 'DPC++ GPU', 'OpenMP CPU', 'OpenMP GPU']
+    labels = ['C++', 'DPC++ CPU', 'DPC++ CPU+GPU', 'OpenMP CPU', 'OpenMP CPU+GPU']
     
     # Создаем директории для результатов
     Path('benchmarks').mkdir(exist_ok=True)
+
+    # Загружаем существующие результаты
+    results = load_existing_results()
 
     probs = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     vertices_by_prob = {}
@@ -55,7 +68,13 @@ def main():
     
     # Для каждой вероятности ребра создаем отдельный график
     for prob in probs:
-        print(f"\nТестирование для вероятности ребра {prob}")
+        # Проверяем, есть ли уже результаты для этой вероятности
+        results_completed = False
+        if str(prob) in results:
+            results_completed = True
+            print(f"\nИспользуем существующие результаты для вероятности {prob}")
+        else:
+            print(f"\nТестирование для вероятности ребра {prob}")
         
         # Создаем график
         plt.figure(figsize=(12, 8))
@@ -64,24 +83,32 @@ def main():
         vertices = vertices_by_prob[prob]
     
         # Запускаем бенчмарки для каждого количества вершин
-        for v in vertices:
-            # Для каждой реализации
-            for i, exe in enumerate(executables):
-                print(f"Тестирование {exe} для {v} вершин")
-                
-                if i == 0:  # Для первой реализации сохраняем граф
-                    avg = run_benchmark(exe, v, prob, save=True)
-                else:
-                    avg = run_benchmark(exe, v, prob)
-                
-                if avg is not None:
-                    avgs[i].append(avg)
-                    print(f"Среднее время = {avg:.6f}")
+        if not results_completed:
+            for v in vertices:
+                # Для каждой реализации
+                for i, exe in enumerate(executables):
+                    print(f"Тестирование {exe} для {v} вершин")
+                    
+                    if i == 0:  # Для первой реализации сохраняем граф
+                        avg = run_benchmark(exe, v, prob, save=True)
+                    else:
+                        avg = run_benchmark(exe, v, prob)
+                    
+                    if avg is not None:
+                        avgs[i].append(avg)
+                        print(f"Среднее время = {avg:.6f}")
 
-        results[prob] = {
-            "avgs": avgs,
-            "vertices": vertices
-        }
+                # Сохраняем промежуточные результаты после каждого теста
+                results[str(prob)] = {
+                    "avgs": avgs,
+                    "vertices": vertices[:len(avgs[0])]
+                }
+                save_intermediate_results(results)
+        else:
+            # Используем существующие результаты
+            for i in range(len(executables)):
+                avgs[i] = results[str(prob)]["avgs"][i]
+            vertices = results[str(prob)]["vertices"]
 
         # Строим график для текущей реализации
         for i, exe in enumerate(executables):
@@ -97,9 +124,6 @@ def main():
         # Сохраняем график
         plt.savefig(f'benchmarks/vertices_vs_time_prob_{prob}.png', dpi=300, bbox_inches='tight')
         plt.close()
-    
-    with open('results.json', 'w') as f:
-        json.dump(results, f)
 
 if __name__ == '__main__':
     main()

@@ -39,10 +39,10 @@ def load_existing_results(filename='results.json'):
 
 def main():
     # Список исполняемых файлов
-    executables = ['main-cpp.o', 'main-dpc-cpu.o', 'main-dpc-gpu.o', 'main-openmp-cpu.o']
-    # executables = ['main-cpp.o', 'main-dpc-cpu.o', 'main-dpc-gpu.o', 'main-openmp-cpu.o', 'main-openmp-gpu.o']
-    labels = ['C++', 'DPC++ CPU', 'DPC++ GPU', 'OpenMP CPU']
-    # labels = ['C++', 'DPC++ CPU', 'DPC++ GPU', 'OpenMP CPU', 'OpenMP GPU']
+    # executables = ['main-cpp.o', 'main-dpc-cpu.o', 'main-dpc-gpu.o', 'main-openmp-cpu.o']
+    executables = ['main-cpp.o', 'main-dpc-cpu.o', 'main-dpc-gpu.o', 'main-openmp-cpu.o', 'main-openmp-gpu.o']
+    # labels = ['C++', 'DPC++ CPU', 'DPC++ GPU', 'OpenMP CPU']
+    labels = ['C++', 'DPC++ CPU', 'DPC++ CPU+GPU', 'OpenMP CPU', 'OpenMP CPU+GPU']
     
     # Создаем директории для результатов
     Path('benchmarks').mkdir(exist_ok=True)
@@ -62,9 +62,9 @@ def main():
         0.9: 20000
     }
 
-    probs = [0.1, 0.5, 0.9]
+    probs = [0.9]
     # probs = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-    deltas = [20, 50, 80]
+    deltas = [1, 60, 100]
     # deltas = [11, 21, 31, 41, 51, 61, 71, 81, 91, 101]
     vertices_by_prob = {}
     for prob in probs:

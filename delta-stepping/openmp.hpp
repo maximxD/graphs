@@ -29,7 +29,6 @@ public:
 
     bool empty() {
         bool is_empty = true;
-        #pragma omp parallel for
         for (int i = 0; i < size; i++) {
             if (data[i] == 1) {
                 is_empty = false;
@@ -39,14 +38,12 @@ public:
     }
 
     void union_with(const OpenMPBucket& other) {
-        #pragma omp parallel for
         for (int i = 0; i < size; i++) {
             data[i] |= other.data[i];
         }
     }
 
     void clear() {
-        #pragma omp parallel for
         for (int i = 0; i < size; i++) {
             data[i] = 0;
         }
@@ -54,7 +51,6 @@ public:
 
     int* get_vertices(int& count) {
         int vertices_count = 0;
-        #pragma omp parallel for
         for (int i = 0; i < size; i++) {
             if (data[i] == 1) {
                 #pragma omp atomic
@@ -85,7 +81,7 @@ void relax_openmp(
     int delta
 ) {
     int old_bucket = (distances[v] == INF) ? -1 : distances[v] / delta;
-
+    
     #pragma omp atomic compare
     if (distances[v] > distances[u] + weight) {
         distances[v] = distances[u] + weight;
@@ -143,7 +139,7 @@ std::vector<int> delta_stepping_openmp(const std::vector<std::vector<std::pair<i
     }
 
     #ifdef OPENMP_GPU
-    #pragma omp target data map(to:buckets[:buckets_size], light_adj_matrix[:num_vertices][:num_vertices], heavy_adj_matrix[:num_vertices][:num_vertices]) map(tofrom: distances[:num_vertices])
+    #pragma omp target data map(distances[:num_vertices], buckets[:buckets_size], light_adj_matrix[:num_vertices][:num_vertices], heavy_adj_matrix[:num_vertices][:num_vertices])
     #endif
     {
         auto start = std::chrono::high_resolution_clock::now();
@@ -158,6 +154,7 @@ std::vector<int> delta_stepping_openmp(const std::vector<std::vector<std::pair<i
                 int *current_vertices_data = current_bucket.get_vertices(current_vertices_count);
 
                 #ifdef OPENMP_GPU
+                #pragma omp target update to(buckets[:buckets_size])
                 #pragma omp target teams distribute parallel for collapse(2)
                 #else
                 #pragma omp parallel for collapse(2)
@@ -179,6 +176,7 @@ std::vector<int> delta_stepping_openmp(const std::vector<std::vector<std::pair<i
             int *current_vertices_data = SBucket.get_vertices(current_vertices_count);
 
             #ifdef OPENMP_GPU
+            #pragma omp target update to(buckets[:buckets_size])
             #pragma omp target teams distribute parallel for collapse(2)
             #else
             #pragma omp parallel for collapse(2)
