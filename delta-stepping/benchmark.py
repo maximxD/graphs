@@ -37,6 +37,19 @@ def load_existing_results(filename='results.json'):
             return json.load(f)
     return {}
 
+def calculate_speedup(cpp_times, parallel_times):
+    """Вычисляет ускорение параллельной реализации относительно C++"""
+    if len(cpp_times) != len(parallel_times):
+        return None
+    speedups = []
+    for i in range(len(cpp_times)):
+        if parallel_times[i] > 0:
+            speedup = cpp_times[i] / parallel_times[i]
+            speedups.append(speedup)
+        else:
+            speedups.append(0)
+    return speedups
+
 def main():
     # Список исполняемых файлов
     # executables = ['main-cpp.o', 'main-dpc-cpu.o', 'main-dpc-gpu.o', 'main-openmp-cpu.o']
@@ -93,7 +106,7 @@ def main():
             else:
                 print(f"\nТестирование для вероятности ребра {prob} и delta {delta}")
             
-            # Создаем график
+            # Создаем график времени выполнения
             plt.figure(figsize=(12, 8))
 
             avgs = [[] for _ in range(len(executables))]
@@ -129,19 +142,45 @@ def main():
                 # avgs = results[result_key]["avgs"][:len(executables)]
                 # vertices = results[result_key]["vertices"][:len(executables)]
 
-            # Строим график для текущей реализации
+            # Строим график времени выполнения для текущей реализации
             for i, exe in enumerate(executables):
                 plt.plot(vertices, avgs[i], label=labels[i], marker='o', linewidth=2)
             
-            # Настраиваем график
+            # Настраиваем график времени выполнения
             plt.xlabel('Количество вершин')
             plt.ylabel('Время выполнения (сек)')
             plt.title(f'Зависимость времени выполнения от количества вершин\n(вероятность ребра = {prob}, delta = {delta})')
             plt.grid(True, linestyle='--', alpha=0.7)
             plt.legend()
             
-            # Сохраняем график
+            # Сохраняем график времени выполнения
             plt.savefig(f'benchmarks/vertices_vs_time_prob_{prob}_delta_{delta}.png', dpi=300, bbox_inches='tight')
+            plt.close()
+
+            # Создаем график ускорения
+            plt.figure(figsize=(12, 8))
+            
+            # Вычисляем ускорение для каждой параллельной реализации относительно C++
+            cpp_times = avgs[0]  # Время C++ реализации
+            speedup_labels = ['DPC++ CPU', 'DPC++ CPU+GPU', 'OpenMP CPU', 'OpenMP CPU+GPU']
+            
+            for i in range(1, len(executables)):
+                parallel_times = avgs[i]
+                speedups = calculate_speedup(cpp_times, parallel_times)
+                if speedups:
+                    plt.plot(vertices, speedups, label=speedup_labels[i-1], marker='o', linewidth=2)
+            
+            plt.axhline(y=1, color='black', linestyle='--', alpha=0.5, label='C++')
+            
+            # Настраиваем график ускорения
+            plt.xlabel('Количество вершин')
+            plt.ylabel('Ускорение')
+            plt.title(f'Ускорение параллельных реализаций относительно последовательной\n(вероятность ребра = {prob}, delta = {delta})')
+            plt.grid(True, linestyle='--', alpha=0.7)
+            plt.legend()
+            
+            # Сохраняем график ускорения
+            plt.savefig(f'benchmarks/speedup_vs_vertices_prob_{prob}_delta_{delta}.png', dpi=300, bbox_inches='tight')
             plt.close()
 
 if __name__ == '__main__':
